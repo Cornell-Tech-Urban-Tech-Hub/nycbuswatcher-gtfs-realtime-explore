@@ -1,30 +1,39 @@
 Usage:
 
 ## requirements
+
 `pip install requests gtfs-realtime-bindings`
+
 An API key from the MTA
 
 ## usage
 
 ### Required arguments
+
 `--key` Your meta developer API key (in quotes?)
+
 `--feed` [positions, alerts, updates]
+
 `--interval` [seconds to wait between fetches]
 
 ### Optional arguments
+
 `--vehicle_id` Unique ID for a single vehicle to track. If you don't get any result on the feed=positions, try changing the `bus_id`.
 
 ## examples
+
 Track positions for one line
+
 `python gtfs-rt-test.py --feed=positions --interval=30 --vehicle_id=5870 --key='3nb42j4b23j4243bjb42j4b23j'`
 
 Track positions for every line
+
 `python gtfs-rt-test.py --feed=positions --interval=30 --key='3nb42j4b23j4243bjb42j4b23j'`
 
 
 # sample positions record
 
-'''
+```
 id: "MTA NYCT_8440"
 vehicle {
     trip {
@@ -44,4 +53,4 @@ vehicle {
     id: "MTA NYCT_8440"
 }
 }
-'''
+```
