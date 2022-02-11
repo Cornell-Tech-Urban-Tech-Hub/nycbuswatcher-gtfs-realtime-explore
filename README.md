@@ -20,6 +20,9 @@ An API key from the MTA
 
 `--vehicle_id` Unique ID for a single vehicle to track. If you don't get any result on the feed=positions, try changing the `bus_id`.
 
+
+`--verbose` Print entire parsed record, rather than summary of selected fields.
+
 ## examples
 
 Track positions for one line, print summary
