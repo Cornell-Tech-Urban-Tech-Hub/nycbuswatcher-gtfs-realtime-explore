@@ -2,106 +2,98 @@
 # GTFS-Realtime explorations
 # 2021 may 16
 # 2021 nov 12 update
-
-# config
-bus_id = '5370'
-
-# sample data
-#
-
-'''
-id: "MTA NYCT_8440"
-vehicle {
-    trip {
-    trip_id: "JA_B1-Sunday-120200_MISC_776"
-    start_date: "20210516"
-    route_id: "Q3"
-    direction_id: 0
-}
-position {
-    latitude: 40.660133361816406
-    longitude: -73.77267456054688
-    bearing: 20.289199829101562
-}
-timestamp: 1621210252
-stop_id: "500158"
-vehicle {
-    id: "MTA NYCT_8440"
-}
-}
-'''
+# 2022 feb 11 update — no longer request geos / geopy
 
 import os, time
 import argparse
 import requests
-import datetime
+import datetime as dt
 from google.transit import gtfs_realtime_pb2
-from geopy.distance import geodesic
 
-def parse_positions(feed):
-    buses={}
-    for entity in feed.entity:
-        if entity.id == f'MTABC_{bus_id}':
-            print(entity)
-        buses[str(entity.id)[-4:]]=(entity.vehicle.position.latitude,entity.vehicle.position.longitude,entity.vehicle.timestamp)
-    return buses
+from math import radians, cos, sin, asin, sqrt
 
-def show_delta(new_positions,old_positions):
-    for id,new_position_data in new_positions.items():
-        if id == bus_id:
-
-            try:
-                old_position=old_positions[id]
-                coords_1 = (old_position[0], old_position[1])
-                coords_2 = (new_position_data[0], new_position_data[1])
-                distance_traveled=geodesic(coords_1, coords_2).meters
-
-                # t1=datetime.datetime.utcfromtimestamp(old_position[2])
-                # t2=datetime.datetime.utcfromtimestamp(new_position_data[2])
-                # time_delta=t2-t1
-                if distance_traveled > 0:
-                    print ('At {}, I saw bus #{} at {},{} which was {} meters from before.'.format(
-                                datetime.datetime.utcfromtimestamp(new_position_data[2]).strftime('%Y-%m-%d %H:%M:%S'),
-                                id,
-                                new_position_data[0],
-                                new_position_data[1],
-                                distance_traveled
-                            )
-                           )
+def check_positive(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
 
 
-            except:
-                pass
-
+def parse_positions(feed, args):
+    
+    # if we are only tracking one vehicle
+    if args.vehicle_id:
+        
+        # fix format and cast to string
+        if args.vehicle_id < 1000:
+            target_vehicle_id = f"_{str(args.vehicle_id)}"
+        else:
+            target_vehicle_id = str(args.vehicle_id)
+            
+        for entity in feed.entity:
+            if entity.id[-4:] == target_vehicle_id:
+                print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
+                    entity.vehicle.trip.route_id,
+                    f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
+                    entity.vehicle.position.latitude,
+                    entity.vehicle.position.longitude
+                    )
+        
+        
+    # if we are tracking all vehicles
+    elif not args.vehicle_id:
+        for entity in feed.entity:
+            print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
+                    entity.vehicle.trip.route_id, 
+                    f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
+                    entity.vehicle.position.latitude,
+                    entity.vehicle.position.longitude
+                    )
+    
+    return
 
 if __name__ == '__main__':
 
     # parse command options
     parser = argparse.ArgumentParser()
+    parser.add_argument('--key',
+                    required=True,
+                    help='Your MTA developer API key')
     parser.add_argument('--feed',
                         choices=['updates', 'positions', 'alerts'],
+                        required=True,
                         help='MTA Buses GTFS-Realtime feed to fetch (updates,positions,alerts)')
+    parser.add_argument('--interval',
+                    type=check_positive,
+                    required=True,
+                    help='Interval in seconds between grabs')
+    parser.add_argument('--vehicle_id',
+                        type=check_positive,
+                        required=False,
+                        help='Track single bus only, using provided vehicle_id')
+    
     args = parser.parse_args()
 
-
-    # make our url
+    # make our urls
     endpoints =    { 'updates':'http://gtfsrt.prod.obanyc.com/tripUpdates?key={}',
                      'positions':'http://gtfsrt.prod.obanyc.com/vehiclePositions?key={}',
                      'alerts':'http://gtfsrt.prod.obanyc.com/alerts?key={}'
                      }
     base_url=endpoints[args.feed]
-    api_key = os.environ['API_KEY']
+    api_key = args.key
     url = base_url.format(api_key)
 
     # parse and print
     feed = gtfs_realtime_pb2.FeedMessage()
-
-    new_positions={}
-    old_positions={}
+    
+    # 
+    if args.vehicle_id:
+        print(f'tracking bus {args.vehicle_id}')
+    else:
+        print("tracking all buses")
 
     # loop forever
     while 1:
-
         response = requests.get(url)
         feed.ParseFromString(response.content)
 
@@ -111,13 +103,12 @@ if __name__ == '__main__':
                     print (entity.trip_update)
 
         elif args.feed == 'positions':
-            new_positions = parse_positions(feed)
-            show_delta(new_positions, old_positions)
-            old_positions = new_positions
+            parse_positions(feed, args)
 
         elif args.feed == 'alerts':
             for entity in feed.entity:
                 print(entity)
             pass
 
-        # time.sleep(10)
+        # wait until we fetch again
+        time.sleep(args.interval)
