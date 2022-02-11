@@ -32,18 +32,24 @@ def parse_positions(feed, args):
             
         for entity in feed.entity:
             if entity.id[-4:] == target_vehicle_id:
-                print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
-                    entity.vehicle.trip.route_id,
-                    f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
-                    entity.vehicle.position.latitude,
-                    entity.vehicle.position.longitude
-                    )
+                if args.verbose == True:
+                    print(entity)
+                else:
+                    print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
+                        entity.vehicle.trip.route_id,
+                        f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
+                        entity.vehicle.position.latitude,
+                        entity.vehicle.position.longitude
+                        )
         
         
     # if we are tracking all vehicles
     elif not args.vehicle_id:
         for entity in feed.entity:
-            print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
+            if args.verbose == True:
+                print(entity)
+            else:
+                print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
                     entity.vehicle.trip.route_id, 
                     f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
                     entity.vehicle.position.latitude,
@@ -71,6 +77,10 @@ if __name__ == '__main__':
                         type=check_positive,
                         required=False,
                         help='Track single bus only, using provided vehicle_id')
+    parser.add_argument('--verbose', 
+                        dest='verbose', 
+                        action='store_true',
+                        help='Verbose tracking echo entire parsed record.')
     
     args = parser.parse_args()
 

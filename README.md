@@ -22,9 +22,13 @@ An API key from the MTA
 
 ## examples
 
-Track positions for one line
+Track positions for one line, print summary
 
 `python gtfs-rt-test.py --feed=positions --interval=30 --vehicle_id=5870 --key='3nb42j4b23j4243bjb42j4b23j'`
+
+Track positions for one line, print full record
+
+`python gtfs-rt-test.py --feed=positions --interval=30 --vehicle_id=5870 --key='3nb42j4b23j4243bjb42j4b23j' --verbose`
 
 Track positions for every line
 
