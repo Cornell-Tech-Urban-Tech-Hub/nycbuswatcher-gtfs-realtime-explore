@@ -53,6 +53,49 @@ def parse_positions(feed, args):
                     )
     return
 
+def parse_updates(feed, args):
+    ## old code
+    # for entity in feed.entity:
+    #     if entity.HasField('trip_update'):
+    #         print (entity.trip_update)
+            
+    ## new code            
+    # if we are only tracking one vehicle
+    if args.vehicle_id:
+        # fix format and cast to string
+        if args.vehicle_id < 1000:
+            target_vehicle_id = f"_{str(args.vehicle_id)}"
+        else:
+            target_vehicle_id = str(args.vehicle_id)
+            
+        for entity in feed.entity:
+            print('*',end = '')
+            if entity.id[-4:] == target_vehicle_id:
+                if args.verbose == True:
+                    print(entity)
+                else:
+                    print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
+                        entity.vehicle.trip.route_id,
+                        f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
+                        entity.vehicle.position.latitude,
+                        entity.vehicle.position.longitude
+                        )        
+    # if we are tracking all vehicles
+    elif not args.vehicle_id:
+        for entity in feed.entity:
+            if args.verbose == True:
+                print(entity)
+            else:
+                print(dt.datetime.fromtimestamp(entity.vehicle.timestamp),
+                    entity.vehicle.trip.route_id, 
+                    f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
+                    entity.vehicle.position.latitude,
+                    entity.vehicle.position.longitude
+                    )
+    return
+
+
+
 if __name__ == '__main__':
 
     # parse command options
@@ -103,9 +146,7 @@ if __name__ == '__main__':
         feed.ParseFromString(response.content)
 
         if args.feed == 'updates':
-            for entity in feed.entity:
-                if entity.HasField('trip_update'):
-                    print (entity.trip_update)
+            parse_updates(feed, args)
 
         elif args.feed == 'positions':
             parse_positions(feed, args)
