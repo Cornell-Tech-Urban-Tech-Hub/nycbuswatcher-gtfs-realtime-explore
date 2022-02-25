@@ -1,0 +1,16 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "gtfs-rt-test.py",
+            "args":["--feed=positions", "--interval=10", "--vehicle_id=5373", "--key='088886bd-cc48-4d7c-bd8a-498d353d7d13'"],          
+            "console": "integratedTerminal"
+        }
+    ]
+}
