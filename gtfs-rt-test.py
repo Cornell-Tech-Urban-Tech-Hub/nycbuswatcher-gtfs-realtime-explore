@@ -3,6 +3,7 @@
 # 2021 may 16
 # 2021 nov 12 update
 # 2022 feb 11 update — no longer request geos / geopy
+# 2022 feb 24 added parsers for alerts, updates
 
 import os, time
 import argparse
@@ -18,12 +19,9 @@ def check_positive(value):
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
-
 def parse_positions(feed, args):
-    
     # if we are only tracking one vehicle
     if args.vehicle_id:
-        
         # fix format and cast to string
         if args.vehicle_id < 1000:
             target_vehicle_id = f"_{str(args.vehicle_id)}"
@@ -40,9 +38,7 @@ def parse_positions(feed, args):
                         f"\tbus {entity.vehicle.vehicle.id[-4:]}", 
                         entity.vehicle.position.latitude,
                         entity.vehicle.position.longitude
-                        )
-        
-        
+                        )        
     # if we are tracking all vehicles
     elif not args.vehicle_id:
         for entity in feed.entity:
@@ -55,7 +51,6 @@ def parse_positions(feed, args):
                     entity.vehicle.position.latitude,
                     entity.vehicle.position.longitude
                     )
-    
     return
 
 if __name__ == '__main__':
